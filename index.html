@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DUTR PDF Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #060b30;
+    }
+    .header {
+      background-color: #ee6912;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #060b30;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    h1 {
+      text-align: center;
+      color: #ffffff;
+    }
+    .credit {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 20px;
+      color: #ee6912;
+    }
+    .credit a {
+      color: #ee6912;
+      text-decoration: none;
+    }
+    .credit a:hover {
+      text-decoration: underline;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #ffffff;
+    }
+    .required::after {
+      content: ' *';
+      color: red;
+    }
+    input, select, textarea, button {
+      width: calc(100% - 22px); /* Adjust width to account for padding and border */
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
+    }
+    input.error, select.error, textarea.error {
+      border-color: red;
+    }
+    option:checked {
+      background-color: #ee6912;
+      color: white;
+    }
+    button {
+      background-color: #ee6912;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      border: none;
+    }
+    button:hover {
+      background-color: #060b;
+    }
+    .error-message {
+      color: red;
+      font-size: 12px;
+      display: none;
+    }
+    @media (max-width: 768px) {
+      .credit {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>DUTR PDF Generator</h1>
+  </div>
+  <div class="container">
+    <div class="credit">Created By <a href="https://example.com">Muneer Iqbal</a></div>
+    <label for="date" class="required">Date</label>
+    <input type="date" id="date" />
+    <div class="error-message" id="date-error">Please fill out this field.</div>
+
+    <label for="court" class="required">Select Court</label>
+    <select id="court">
+      <option value="">Select Court</option>
+      <option value="Sessions Court">Sessions Court</option>
+      <option value="NIA">NIA</option>
+      <option value="CJM">CJM</option>
+      <option value="JMIC">JMIC</option>
+      <option value="AMM">AMM</option>
+    </select>
+    <div class="error-message" id="court-error">Please fill out this field.</div>
+
+    <label for="files" class="required">Number of Files for DUTR</label>
+    <input type="number" id="files" />
+    <div class="error-message" id="files-error">Please fill out this field.</div>
+
+    <label for="doneFiles" class="required">Number of Files Done</label>
+    <input type="number" id="doneFiles" />
+    <div class="error-message" id="doneFiles-error">Please fill out this field.</div>
+    <div class="error-message" id="doneFiles-greater-error">Number of files Done is greater than Number of files for DUTR.</div>
+
+    <label for="status" class="required">Status</label>
+    <select id="status">
+      <option value="">Select Status</option>
+      <option value="Done Successfully">Done Successfully</option>
+      <option value="Pending">Pending</option>
+    </select>
+    <div class="error-message" id="status-error">Please fill out this field.</div>
+
+    <label for="remarks">Remarks</label>
+    <textarea id="remarks" rows="4"></textarea>
+
+    <button onclick="generatePDF()">Generate PDF</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
+  <script>
+    function formatDate(date) {
+      const d = new Date(date);
+      let day = d.getDate();
+      let month = d.getMonth() + 1;
+      const year = d.getFullYear();
+
+      if (day < 10) {
+        day = '0' + day;
+      }
+      if (month < 10) {
+        month = '0' + month;
+      }
+
+      return `${day}/${month}/${year}`;
+    }
+
+    function generatePDF() {
+      const date = document.getElementById('date').value;
+      const court = document.getElementById('court').value;
+      const files = document.getElementById('files').value;
+      const doneFiles = document.getElementById('doneFiles').value;
+      const status = document.getElementById('status').value;
+      const remarks = document.getElementById('remarks').value;
+
+      let isValid = true;
+
+      // Validate required fields
+      if (!date) {
+        document.getElementById('date').classList.add('error');
+        document.getElementById('date-error').style.display = 'block';
+        isValid = false;
+      } else {
+        document.getElementById('date').classList.remove('error');
+        document.getElementById('date-error').style.display = 'none';
+      }
+
+      if (!court) {
+        document.getElementById('court').classList.add('error');
+        document.getElementById('court-error').style.display = 'block';
+        isValid = false;
+      } else {
+        document.getElementById('court').classList.remove('error');
+        document.getElementById('court-error').style.display = 'none';
+      }
+
+      if (!files) {
+        document.getElementById('files').classList.add('error');
+        document.getElementById('files-error').style.display = 'block';
+        isValid = false;
+      } else {
+        document.getElementById('files').classList.remove('error');
+        document.getElementById('files-error').style.display = 'none';
+      }
+
+      if (!doneFiles) {
+        document.getElementById('doneFiles').classList.add('error');
+        document.getElementById('doneFiles-error').style.display = 'block';
+        isValid = false;
+      } else {
+        document.getElementById('doneFiles').classList.remove('error');
+        document.getElementById('doneFiles-error').style.display = 'none';
+      }
+
+      if (!status) {
+        document.getElementById('status').classList.add('error');
+        document.getElementById('status-error').style.display = 'block';
+        isValid = false;
+      } else {
+        document.getElementById('status').classList.remove('error');
+        document.getElementById('status-error').style.display = 'none';
+      }
+
+      if (parseInt(doneFiles) > parseInt(files)) {
+        document.getElementById('doneFiles').classList.add('error');
+        document.getElementById('doneFiles-greater-error').style.display = 'block';
+        isValid = false;
+      } else {
+        document.getElementById('doneFiles').classList.remove('error');
+        document.getElementById('doneFiles-greater-error').style.display = 'none';
+      }
+
+      if (!isValid) {
+        return;
+      }
+
+      const formattedDate = formatDate(date);
+
+      // Create a new PDF document
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+      
+      // Title of the document
+      const title = `DUTR Entry of ${court}`;
+      pdf.setFontSize(18);
+      pdf.text(title, 20, 20);
+      
+      // Add form data to the PDF in a table
+      pdf.autoTable({
+        startY: 30,
+        head: [['Field', 'Value']],
+        body: [
+          ['Date', formattedDate],
+          ['Court', court],
+          ['No. of Files for DUTR', files],
+          ['No. of Files Done', doneFiles],
+          ['Status', status],
+          ['Remarks', remarks]
+        ]
+      });
+
+      // Save PDF
+      pdf.save('DUTR entry.pdf');
+    }
+  </script>
+</body>
+</html>
